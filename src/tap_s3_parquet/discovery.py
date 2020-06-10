@@ -1,45 +1,40 @@
 """Handler for discovery/catalog generation"""
+import singer
 from singer import metadata
 from .s3 import S3
 
 from typing import Dict, List
+
+logger = singer.get_logger()
 
 
 class Discover:
     """Class with methods to generate the catalog"""
 
     def __init__(self, config: Dict) -> None:
-        """
-
-        :param config:
-        """
         self.config = config
         self.s3 = S3(config)
 
     def get_catalog(self) -> Dict:
+        logger.info("Starting tap discovery")
         streams = self._discover_streams()
         catalog = {"streams": streams}
+        logger.info("Finished tap discovery")
         return catalog
 
     def _discover_streams(self) -> List:
         streams = [
             {
+                "schema": self.s3.get_schema_for_table(table),
                 "stream": table["table_name"],
                 "tap_stream_id": table["table_name"],
-                "schema": self.s3.get_schema_for_table(table),
+                "metadata": self._load_metadata(
+                    table, self.s3.get_schema_for_table(table)
+                ),
             }
             for table in self.config["tables"]
         ]
 
-        # TODO use zip ya dummy
-        for index, stream in enumerate(streams):
-            stream.update(
-                {
-                    "metadata": self._load_metadata(
-                        self.config["tables"][index], stream["schema"]
-                    )
-                }
-            )
         return streams
 
     @staticmethod

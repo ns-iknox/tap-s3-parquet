@@ -3,7 +3,8 @@ import os
 import re
 import singer
 
-from typing import List, Dict
+from functools import lru_cache
+from typing import List, Dict, Iterator
 from genson import SchemaBuilder
 
 logger = singer.get_logger()
@@ -35,6 +36,7 @@ class S3:
     def __init__(self, config: dict) -> None:
         self.config = config
 
+    @lru_cache(maxsize=64)
     def get_schema_for_table(self, table: Dict) -> Dict:
         input_files = self.get_input_files_for_table(table)
         schema = self._get_schema_from_files(input_files)
@@ -80,22 +82,18 @@ class S3:
                     "properties": {
                         key: {
                             "anyOf": [
-                                {
-                                    "type": [ATHENA_TO_JSON[value]]
-                                },
-                                {
-                                    "type": "null"
-                                }
+                                {"type": [ATHENA_TO_JSON[value]]},
+                                {"type": "null"},
                             ]
                         }
-                    }
+                    },
                 }
             )
 
         return builder.to_schema()
 
     @staticmethod
-    def get_descriptions(paths: List[str]):
+    def get_descriptions(paths: List[str]) -> List:
         descriptions = wr.s3.describe_objects(paths)
         return [
             {
@@ -105,5 +103,6 @@ class S3:
             for x in paths
         ]
 
-    def get_dfs_from_file(self, file):
+    @staticmethod
+    def get_dfs_from_file(file: str) -> Iterator:
         return wr.s3.read_parquet(path=file, chunked=True)

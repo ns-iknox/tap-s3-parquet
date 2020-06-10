@@ -4,7 +4,7 @@ import json
 import logging
 import sys
 import singer
-from typing import Dict
+from typing import Dict, Union
 
 from .discovery import Discover
 from .sync import Sync
@@ -33,19 +33,17 @@ def cli(
     log_level: str,
     config: Dict,
     discovery: bool = False,
-    state: Dict = None,
-    catalog: Dict = None,
+    state: Union[Dict, None] = None,
+    catalog: Union[Dict, None] = None,
 ) -> None:
     """Singer tap to retrieve data from parquet files stored in S3"""
 
     logging.basicConfig(level=getattr(logging, log_level.upper()))
 
     if discovery:
-        logger.info("Starting tap discovery")
         discoverer = Discover(config)
         json.dump(discoverer.get_catalog(), sys.stdout, indent=2)
-        logger.info("Finished tap discovery")
-    else:
+    elif catalog:
         syncer = Sync(catalog, config, state)
         syncer.sync()
 

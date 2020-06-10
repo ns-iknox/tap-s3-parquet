@@ -1,9 +1,7 @@
 {
   "start_date": "2017-11-02T00:00:00Z",
   "account_id": "1234567890",
-  "role_name": "role_with_bucket_access",
   "bucket": "datasets",
-  "external_id": "my_optional_secret_external_id",
   "tables": [
     {
       "search_pattern": "opportunity.parquet",
@@ -11,8 +9,5 @@
       "key_properties": "Id",
       "delimiter": ","
     }
-  ],
-  "boto3_client_options": {
-    "endpoint_url": "http://127.0.0.1:9000"
-  }
+  ]
 }

@@ -2,10 +2,10 @@
 from pathlib import Path
 import click
 import json
-from typing import Dict
+from typing import Tuple
 
 
-def file_option_loader(_, __, file_path: str) -> Dict:
+def validate_and_load_file(_, __, file_path: str) -> Tuple:
     if file_path is not None:
         file = Path(file_path)
         if file.exists() is False:

@@ -36,11 +36,11 @@ class S3:
         self.config = config
 
     def get_schema_for_table(self, table: Dict) -> Dict:
-        input_files = self._get_input_files_for_table(table)
+        input_files = self.get_input_files_for_table(table)
         schema = self._get_schema_from_files(input_files)
         return schema
 
-    def _get_input_files_for_table(self, table: Dict) -> List:
+    def get_input_files_for_table(self, table: Dict) -> List:
         search_pattern = table["search_pattern"]
         table_name = table["table_name"]
         prefix = table.get("search_prefix", "")
@@ -55,7 +55,7 @@ class S3:
                 search_pattern,
             ) from e
 
-        logger.info(f"Checking bucket {bucket} for keys matching {search_pattern}")
+        logger.debug(f"Checking bucket {bucket} for keys matching {search_pattern}")
         # TODO:  Add paginator logic? What if these wr dicts get huge?
         all_objs = wr.s3.list_objects(s3_path)
         objs_sizes = wr.s3.size_objects(all_objs)
@@ -63,6 +63,7 @@ class S3:
         matched_objs = [
             x for x in not_empty_objs if matcher.search(os.path.basename(x))
         ]
+
         return matched_objs
 
     @staticmethod
@@ -74,7 +75,35 @@ class S3:
 
         for key, value in columns.items():
             builder.add_schema(
-                {"type": "object", "properties": {key: {"type": ATHENA_TO_JSON[value]}}}
+                {
+                    "type": "object",
+                    "properties": {
+                        key: {
+                            "anyOf": [
+                                {
+                                    "type": [ATHENA_TO_JSON[value]]
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ]
+                        }
+                    }
+                }
             )
 
         return builder.to_schema()
+
+    @staticmethod
+    def get_descriptions(paths: List[str]):
+        descriptions = wr.s3.describe_objects(paths)
+        return [
+            {
+                "LastModified": descriptions[x]["LastModified"],
+                "ContentLength": descriptions[x]["ContentLength"],
+            }
+            for x in paths
+        ]
+
+    def get_dfs_from_file(self, file):
+        return wr.s3.read_parquet(path=file, chunked=True)

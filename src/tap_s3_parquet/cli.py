@@ -4,10 +4,11 @@ import json
 import logging
 import sys
 import singer
-from typing import Dict, Union
+from typing import Dict
 
 from .discovery import Discover
-from .utils import file_option_loader
+from .sync import Sync
+from .utils import validate_and_load_file
 
 logger = singer.get_logger()
 
@@ -21,29 +22,32 @@ logger = singer.get_logger()
 )
 @click.option("--discover", "discovery", is_flag=True, help="Run tap in discovery mode")
 @click.option(
-    "--config", required=True, callback=file_option_loader, help="Path to config file"
+    "--config",
+    required=True,
+    callback=validate_and_load_file,
+    help="Path to config file",
 )
-@click.option("--state", callback=file_option_loader, help="Path to state file")
-@click.option("--catalog", callback=file_option_loader, help="Path to catalog file")
+@click.option("--state", callback=validate_and_load_file, help="Path to state file")
+@click.option("--catalog", callback=validate_and_load_file, help="Path to catalog file")
 def cli(
     log_level: str,
     config: Dict,
     discovery: bool = False,
-    state: Union[Dict, None] = None,
-    catalog: Union[Dict, None] = None,
+    state: Dict = None,
+    catalog: Dict = None,
 ) -> None:
     """Singer tap to retrieve data from parquet files stored in S3"""
 
     logging.basicConfig(level=getattr(logging, log_level.upper()))
 
     if discovery:
-        logger.info("Starting discovery")
+        logger.info("Starting tap discovery")
         discoverer = Discover(config)
         json.dump(discoverer.get_catalog(), sys.stdout, indent=2)
-        logger.info("Finished discovery")
+        logger.info("Finished tap discovery")
     else:
-        logger.info("Starting sync")
-        logger.info("Finished sync")
+        syncer = Sync(catalog, config, state)
+        syncer.sync()
 
 
 if __name__ == "__main__":

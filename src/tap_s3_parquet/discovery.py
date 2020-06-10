@@ -1,7 +1,6 @@
 """Handler for discovery/catalog generation"""
 from singer import metadata
 from .s3 import S3
-from .parquet import Parquet
 
 from typing import Dict, List
 
@@ -16,7 +15,6 @@ class Discover:
         """
         self.config = config
         self.s3 = S3(config)
-        self.parquet = Parquet()
 
     def get_catalog(self) -> Dict:
         streams = self._discover_streams()
@@ -33,6 +31,7 @@ class Discover:
             for table in self.config["tables"]
         ]
 
+        # TODO use zip ya dummy
         for index, stream in enumerate(streams):
             stream.update(
                 {

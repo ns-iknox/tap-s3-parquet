@@ -21,9 +21,8 @@ Options:
   --help                          Show this message and exit.
 ```
 If you're unfamiliar with how singer taps operate, these may help:
-
-https://github.com/singer-io/getting-started/tree/master/docs
-https://blog.panoply.io/etl-with-singer-a-tutorial
+* https://github.com/singer-io/getting-started/tree/master/docs
+* https://blog.panoply.io/etl-with-singer-a-tutorial
 
 
 ## Development

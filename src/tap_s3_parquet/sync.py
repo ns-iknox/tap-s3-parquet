@@ -1,5 +1,6 @@
 """Handler for data syncing"""
 import singer
+import numpy as np
 from singer import metadata
 from singer import utils
 from singer import Transformer
@@ -111,7 +112,9 @@ class Sync:
         dfs = self.s3.get_dfs_from_file(file)
 
         for df in dfs:
-            dict_records = df.apply(lambda x: x.to_dict(), axis=1)
+            dict_records = df.replace({np.nan: None}).apply(
+                lambda x: x.to_dict(), axis=1
+            )
 
             with Transformer() as transformer:
                 transformed_records = [

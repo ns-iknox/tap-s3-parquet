@@ -36,7 +36,7 @@ class S3:
     def __init__(self, config: dict) -> None:
         self.config = config
 
-    @lru_cache(maxsize=64)
+    #@lru_cache(maxsize=64)
     def get_schema_for_table(self, table: Dict) -> Dict:
         input_files = self.get_input_files_for_table(table)
         schema = self._get_schema_from_files(input_files)

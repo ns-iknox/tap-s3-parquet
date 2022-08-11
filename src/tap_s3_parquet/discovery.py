@@ -23,16 +23,17 @@ class Discover:
         return catalog
 
     def _discover_streams(self) -> List:
-        streams = [
-            {
-                "schema": self.s3.get_schema_for_table(table),
-                "stream": table["table_name"],
-                "tap_stream_id": table["table_name"],
-                "metadata": self._load_metadata(
-                    table, self.s3.get_schema_for_table(table)
-                ),
-            }
-            for table in self.config["tables"]
+        for table in self.config["tables"]:
+            schema = self.s3.get_schema_for_table(table)
+            streams = [
+                {
+                    "schema": schema,
+                    "stream": table["table_name"],
+                    "tap_stream_id": table["table_name"],
+                    "metadata": self._load_metadata(
+                        table, schema
+                    ),
+                }
         ]
 
         return streams
